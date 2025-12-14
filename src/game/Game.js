@@ -6,6 +6,8 @@ import { Car } from './entities/Car.js';
 import { Bug } from './entities/Bug.js';
 import { Powerup } from './entities/Powerup.js';
 import { BallPlayer } from './entities/BallPlayer.js';
+import { Dog } from './entities/Dog.js';
+import { Cat } from './entities/Cat.js';
 import { AudioController } from './Audio.js';
 
 export class Game {
@@ -54,6 +56,10 @@ export class Game {
       this.entities.push(new Bug(this.track));
       this.entities.push(new Powerup(this.track));
     }
+
+    // Pets
+    this.entities.push(new Dog(this.track));
+    this.entities.push(new Cat(this.track));
 
     this.state = 'RACE';
     this.lastTime = 0;
@@ -171,7 +177,7 @@ export class Game {
 
     // Update all entities
     this.entities.forEach(e => {
-      if (e.update) e.update(dt);
+      if (e.update) e.update(dt, this.entities);
     });
 
     // Car vs Car Collision (Blocking)
@@ -239,17 +245,21 @@ export class Game {
         this.entities.forEach(item => {
           if (item === p) return;
           if (!item.active) return;
-          if (!(item instanceof Bug || item instanceof Powerup)) return;
+          if (!(item instanceof Bug || item instanceof Powerup || item instanceof Dog || item instanceof Cat)) return;
 
-          let distDiff = Math.abs(p.distance - item.distance);
-          const totalLen = this.track.totalLength;
-          if (distDiff > totalLen / 2) distDiff = totalLen - distDiff;
+          if (item.distance !== undefined && p.distance !== undefined) {
+            let distDiff = Math.abs(p.distance - item.distance);
+            const totalLen = this.track.totalLength;
+            if (distDiff > totalLen / 2) distDiff = totalLen - distDiff;
+            // Optimization: skip if far on track loop
+            if (distDiff > 200) return;
+          }
 
           const dx = p.x - item.x;
           const dy = p.y - item.y;
           const distSq = dx * dx + dy * dy;
 
-          if (distSq < 30 * 30 && Math.abs(p.z - item.z) < 0.5) {
+          if (distSq < 30 * 30 && Math.abs(p.z - (item.z || 0)) < 0.5) {
             this.handleCollision(p, item);
           }
         });
@@ -260,7 +270,7 @@ export class Game {
     this.ballPlayers.forEach(p => {
       this.entities.forEach(item => {
         if (!item.active) return;
-        if (!(item instanceof Bug || item instanceof Powerup)) return;
+        if (!(item instanceof Bug || item instanceof Powerup || item instanceof Dog || item instanceof Cat)) return;
 
         const dx = p.x - item.x;
         const dy = p.y - item.y;
@@ -311,6 +321,18 @@ export class Game {
 
       item.active = false;
       this.audio.playCoin();
+    } else if (item instanceof Dog || item instanceof Cat) {
+      // Stop the actor
+      if (actor instanceof Car) {
+        actor.speed = 0;
+        // Push back slightly?
+        // actor.distance -= 20; 
+      }
+      if (actor instanceof BallPlayer) {
+        actor.vx = 0;
+        actor.vy = 0;
+      }
+      this.audio.playTone(150, 'sawtooth', 0.5); // Bark/Meow sound placeholder
     }
   }
 
