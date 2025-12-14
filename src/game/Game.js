@@ -232,8 +232,8 @@ export class Game {
 
     // Collision Detection
     this.entities.forEach(e => {
-      // Only check Players vs Items
-      if (e.isPlayer) {
+      // Check Cars vs Items
+      if (e instanceof Car) {
         const p = e;
         this.entities.forEach(item => {
           if (item === p) return;
@@ -266,17 +266,25 @@ export class Game {
     this.input.update();
   }
 
-  handleCollision(player, item) {
+  handleCollision(car, item) {
     if (item instanceof Bug) {
-      if (player.playerId === 1) this.score1 = Math.max(0, this.score1 - 5);
-      if (player.playerId === 2) this.score2 = Math.max(0, this.score2 - 5);
+      const points = -5;
+      if (car.isPlayer) {
+        if (car.playerId === 1) this.score1 = Math.max(0, this.score1 + points);
+        if (car.playerId === 2) this.score2 = Math.max(0, this.score2 + points);
+      }
+      car.score = Math.max(0, car.score + points);
 
-      player.speed *= 0.5;
+      car.speed *= 0.5;
       item.active = false;
       this.audio.playSplat();
     } else if (item instanceof Powerup) {
-      if (player.playerId === 1) this.score1 += 10;
-      if (player.playerId === 2) this.score2 += 10;
+      const points = 10;
+      if (car.isPlayer) {
+        if (car.playerId === 1) this.score1 += points;
+        if (car.playerId === 2) this.score2 += points;
+      }
+      car.score += points;
 
       item.active = false;
       this.audio.playCoin();
