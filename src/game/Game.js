@@ -306,7 +306,7 @@ export class Game {
         const dy = car.y - bp.y;
         const distSq = dx * dx + dy * dy;
 
-        if (distSq < 40 * 40 && Math.abs(car.z - (bp.z || 0)) < 20) {
+        if (distSq < 40 * 40 && Math.abs(car.z - (bp.z || 0)) < 1) {
           this.handleCollision(car, bp);
         }
       });
@@ -362,9 +362,11 @@ export class Game {
       }
 
       const now = Date.now();
-      if (!item.lastSoundTime || now - item.lastSoundTime > 1000) {
-        this.audio.playTone(150, 'sawtooth', 0.5); // Bark/Meow sound placeholder
-        item.lastSoundTime = now;
+      if (item instanceof Dog || item instanceof Cat) {
+        if (!item.lastSoundTime || now - item.lastSoundTime > 1000) {
+          this.audio.playTone(150, 'sawtooth', 0.5); // Bark/Meow sound placeholder
+          item.lastSoundTime = now;
+        }
       }
     }
   }

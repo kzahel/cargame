@@ -58,7 +58,7 @@ export class AudioController {
         if (this.ctx.state === 'suspended') this.ctx.resume();
         if (!this.engineOsc) this.startEngine();
 
-        const targetVol = active ? 0.1 : 0;
+        const targetVol = active ? 0.01 : 0;
         const targetFreq = active ? 80 : 50;
 
         const time = this.ctx.currentTime;
