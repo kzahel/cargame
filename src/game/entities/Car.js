@@ -20,6 +20,7 @@ export class Car {
         this.angle = 0;
         this.z = 0;
         this.score = 0;
+        this.isAccelerating = false;
     }
 
     getColor(style) {
@@ -83,6 +84,30 @@ export class Car {
         // ctx.rotate(this.angle); // If 0 is Right. 
         // Track angle is atan2(dy, dx). aligned with X axis.
         ctx.rotate(this.angle);
+
+        // Rocket Fire
+        if (this.isAccelerating) {
+            ctx.save();
+            ctx.translate(-15, 0); // Back of car
+
+            // Core
+            ctx.fillStyle = '#f1c40f'; // Yellow
+            ctx.beginPath();
+            ctx.moveTo(0, -5);
+            ctx.lineTo(-20 - Math.random() * 10, 0);
+            ctx.lineTo(0, 5);
+            ctx.fill();
+
+            // Outer
+            ctx.fillStyle = '#e74c3c'; // Red
+            ctx.beginPath();
+            ctx.moveTo(0, -8);
+            ctx.lineTo(-15 - Math.random() * 10, 0);
+            ctx.lineTo(0, 8);
+            ctx.fill();
+
+            ctx.restore();
+        }
 
         // Draw based on style
         ctx.fillStyle = this.color;

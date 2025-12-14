@@ -41,4 +41,28 @@ export class AudioController {
         this.playTone(800, 'sine', 0.1);
         setTimeout(() => this.playTone(1200, 'sine', 0.2), 100);
     }
+
+    startEngine() {
+        if (this.engineOsc) return;
+        this.engineOsc = this.ctx.createOscillator();
+        this.engineGain = this.ctx.createGain();
+        this.engineOsc.type = 'sawtooth';
+        this.engineOsc.frequency.value = 50;
+        this.engineGain.gain.value = 0;
+        this.engineOsc.connect(this.engineGain);
+        this.engineGain.connect(this.ctx.destination);
+        this.engineOsc.start();
+    }
+
+    setEngineThrust(active) {
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        if (!this.engineOsc) this.startEngine();
+
+        const targetVol = active ? 0.1 : 0;
+        const targetFreq = active ? 80 : 50;
+
+        const time = this.ctx.currentTime;
+        this.engineGain.gain.setTargetAtTime(targetVol, time, 0.1);
+        this.engineOsc.frequency.setTargetAtTime(targetFreq, time, 0.1);
+    }
 }

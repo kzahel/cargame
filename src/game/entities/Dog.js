@@ -79,11 +79,20 @@ export class Dog {
                 const distSq = dx * dx + dy * dy;
 
                 if (distSq < 300 * 300) {
-                    chasing = true;
-                    this.state = 'CHASE';
-                    this.targetX = cat.x;
-                    this.targetY = cat.y;
-                    this.speed = this.chaseSpeed;
+                    // Chance to chase
+                    if (this.state !== 'CHASE' && Math.random() < 0.005) {
+                        chasing = true;
+                        this.state = 'CHASE';
+                        this.targetX = cat.x;
+                        this.targetY = cat.y;
+                        this.speed = this.chaseSpeed;
+                    }
+
+                    if (this.state === 'CHASE') {
+                        chasing = true; // Continue chasing if already in state
+                        this.targetX = cat.x;
+                        this.targetY = cat.y;
+                    }
 
                     if (distSq < 20 * 20) {
                         // CATCH!

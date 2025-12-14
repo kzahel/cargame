@@ -140,15 +140,22 @@ export class Game {
           if (this.input.isDown('ArrowLeft')) this.player1.changeLane(-1);
           if (this.input.isDown('ArrowRight')) this.player1.changeLane(1);
         }
-        if (this.input.isDown('ArrowUp')) this.player1.speed += 300 * dt;
-        else if (this.input.isDown('ArrowDown')) this.player1.speed -= 300 * dt;
+        if (this.input.isDown('ArrowUp')) {
+          this.player1.speed += 300 * dt;
+          this.player1.isAccelerating = true;
+        } else {
+          if (this.input.isDown('ArrowDown')) this.player1.speed -= 300 * dt;
+          this.player1.isAccelerating = false;
+        }
       } else {
         // Initial Auto-drive before control
         this.player1.speed = 120;
+        this.player1.isAccelerating = false;
       }
     } else {
       // Friction when empty
       this.player1.speed *= 0.95;
+      this.player1.isAccelerating = false;
     }
     this.player1.speed = Math.max(0, Math.min(this.player1.speed, 600));
 
@@ -164,15 +171,25 @@ export class Game {
           if (this.input.isDown('a')) this.player2.changeLane(-1);
           if (this.input.isDown('d')) this.player2.changeLane(1);
         }
-        if (this.input.isDown('w')) this.player2.speed += 300 * dt;
-        else if (this.input.isDown('s')) this.player2.speed -= 300 * dt;
+        if (this.input.isDown('w')) {
+          this.player2.speed += 300 * dt;
+          this.player2.isAccelerating = true;
+        } else {
+          if (this.input.isDown('s')) this.player2.speed -= 300 * dt;
+          this.player2.isAccelerating = false;
+        }
       } else {
         this.player2.speed = 120;
+        this.player2.isAccelerating = false;
       }
     } else {
       this.player2.speed *= 0.95;
+      this.player2.isAccelerating = false;
     }
     this.player2.speed = Math.max(0, Math.min(this.player2.speed, 600));
+
+    // Audio
+    this.audio.setEngineThrust(this.player1.isAccelerating || this.player2.isAccelerating);
 
 
     // Update all entities
@@ -282,6 +299,19 @@ export class Game {
       });
     });
 
+    // Check Cars vs BallPlayers
+    cars.forEach(car => {
+      this.ballPlayers.forEach(bp => {
+        const dx = car.x - bp.x;
+        const dy = car.y - bp.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < 40 * 40 && Math.abs(car.z - (bp.z || 0)) < 20) {
+          this.handleCollision(car, bp);
+        }
+      });
+    });
+
     this.entities = this.entities.filter(e => e.active !== false);
 
     // Respawn
@@ -321,18 +351,21 @@ export class Game {
 
       item.active = false;
       this.audio.playCoin();
-    } else if (item instanceof Dog || item instanceof Cat) {
+    } else if (item instanceof Dog || item instanceof Cat || item instanceof BallPlayer) {
       // Stop the actor
       if (actor instanceof Car) {
         actor.speed = 0;
-        // Push back slightly?
-        // actor.distance -= 20; 
       }
       if (actor instanceof BallPlayer) {
         actor.vx = 0;
         actor.vy = 0;
       }
-      this.audio.playTone(150, 'sawtooth', 0.5); // Bark/Meow sound placeholder
+
+      const now = Date.now();
+      if (!item.lastSoundTime || now - item.lastSoundTime > 1000) {
+        this.audio.playTone(150, 'sawtooth', 0.5); // Bark/Meow sound placeholder
+        item.lastSoundTime = now;
+      }
     }
   }
 
