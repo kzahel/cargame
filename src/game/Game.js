@@ -231,8 +231,9 @@ export class Game {
     this.ballPlayers.forEach(bp => bp.update(dt, this.input));
 
     // Collision Detection
+    // Collision Detection
+    // Check Cars vs Items
     this.entities.forEach(e => {
-      // Check Cars vs Items
       if (e instanceof Car) {
         const p = e;
         this.entities.forEach(item => {
@@ -255,6 +256,22 @@ export class Game {
       }
     });
 
+    // Check BallPlayers vs Items
+    this.ballPlayers.forEach(p => {
+      this.entities.forEach(item => {
+        if (!item.active) return;
+        if (!(item instanceof Bug || item instanceof Powerup)) return;
+
+        const dx = p.x - item.x;
+        const dy = p.y - item.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < 30 * 30) {
+          this.handleCollision(p, item);
+        }
+      });
+    });
+
     this.entities = this.entities.filter(e => e.active !== false);
 
     // Respawn
@@ -266,25 +283,31 @@ export class Game {
     this.input.update();
   }
 
-  handleCollision(car, item) {
+  handleCollision(actor, item) {
+    const isPlayer = actor.isPlayer || (actor instanceof BallPlayer);
+    const playerId = actor.playerId;
+
     if (item instanceof Bug) {
       const points = -5;
-      if (car.isPlayer) {
-        if (car.playerId === 1) this.score1 = Math.max(0, this.score1 + points);
-        if (car.playerId === 2) this.score2 = Math.max(0, this.score2 + points);
-      }
-      car.score = Math.max(0, car.score + points);
+      if (playerId === 1) this.score1 = Math.max(0, this.score1 + points);
+      if (playerId === 2) this.score2 = Math.max(0, this.score2 + points);
 
-      car.speed *= 0.5;
+      if (actor.score !== undefined) actor.score = Math.max(0, actor.score + points);
+
+      if (actor instanceof Car) actor.speed *= 0.5;
+      if (actor instanceof BallPlayer) {
+        actor.vx *= 0.5;
+        actor.vy *= 0.5;
+      }
+
       item.active = false;
       this.audio.playSplat();
     } else if (item instanceof Powerup) {
       const points = 10;
-      if (car.isPlayer) {
-        if (car.playerId === 1) this.score1 += points;
-        if (car.playerId === 2) this.score2 += points;
-      }
-      car.score += points;
+      if (playerId === 1) this.score1 += points;
+      if (playerId === 2) this.score2 += points;
+
+      if (actor.score !== undefined) actor.score += points;
 
       item.active = false;
       this.audio.playCoin();
